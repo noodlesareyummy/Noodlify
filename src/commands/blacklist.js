@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { blacklistUser, removeBlacklist, isBlacklisted, getAllBlacklisted } = require('../utils/cooldownManager');
 const { cancelVerification } = require('../modules/verificationManager');
-const { ephemeralReply } = require('../utils/ephemeralHelper');
+const { ephemeralReply, ephemeralDefer } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()

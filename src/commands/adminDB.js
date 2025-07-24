@@ -2,7 +2,7 @@ const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = re
 const fs = require('fs');
 const path = require('path');
 const { HistoryDB, ApplicationDB, BlacklistDB } = require('../utils/databaseManager');
-const { ephemeralReply } = require('../utils/ephemeralHelper');
+const { ephemeralReply, ephemeralDefer } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()

@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { ephemeralDefer } = require('../utils/ephemeralHelper');
+const { ephemeralDefer, ephemeralReply } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()

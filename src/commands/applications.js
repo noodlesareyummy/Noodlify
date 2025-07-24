@@ -1,5 +1,5 @@
 const { EmbedBuilder, SlashCommandBuilder } = require('discord.js');
-const { ephemeralReply } = require('../utils/ephemeralHelper');
+const { ephemeralReply, ephemeralDefer } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
