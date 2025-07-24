@@ -8,7 +8,7 @@ async function handleVerificationStart(client, interaction) {
   try {
     if (client.verificationDisabled) {
       return await interaction.reply({
-        content: 'nuh uh, verifying is disable atm...',
+        content: 'nuh uh, verifying is disabled atm...',
         ephemeral: true
       });
     }
@@ -90,7 +90,6 @@ async function handleVerificationStart(client, interaction) {
 
     await user.send({ embeds: [verifyEmbed] });
 
-    // Respond to the interaction
     await interaction.reply({
       content: 'Verification process started! plz check ur DMs.',
       ephemeral: true
@@ -100,7 +99,6 @@ async function handleVerificationStart(client, interaction) {
   } catch (error) {
     console.error('Error starting verification:', error);
 
-    // If error is likely due to closed DMs
     if (error.code === 50007) {
       await interaction.reply({
         content: 'I cannot send u a DM... plz enable DMs and try again.',
