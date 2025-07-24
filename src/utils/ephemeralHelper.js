@@ -28,6 +28,12 @@ function ephemeralFollowUp(interaction, options) {
   });
 }
 
+function ephemeralDefer(interaction) {
+  return interaction.deferReply({
+    flags: MessageFlags.Ephemeral
+  });
+}
+
 function ephemeralEdit(interaction, options) {
   if (typeof options === 'string') {
     return interaction.editReply({
@@ -41,5 +47,6 @@ function ephemeralEdit(interaction, options) {
 module.exports = { 
   ephemeralReply, 
   ephemeralFollowUp, 
-  ephemeralEdit 
+  ephemeralEdit,
+  ephemeralDefer
 };

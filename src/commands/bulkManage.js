@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { denyAllVerifications } = require('../modules/verificationManager');
-const { ephemeralReply, ephemeralEdit } = require('../utils/ephemeralHelper');
+const { ephemeralReply, ephemeralEdit, ephemeralDefer } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,7 +27,7 @@ module.exports = {
       if (subcommand === 'deny-all') {
         const reason = interaction.options.getString('reason') || 'Bulk denied by staff';
         
-        await interaction.deferReply({ flags: 64 }); // 64 = ephemeral flag
+        await ephemeralDefer(interaction);
         
         const count = await denyAllVerifications(client, interaction.user.id, reason);
         

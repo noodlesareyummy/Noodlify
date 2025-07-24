@@ -1,12 +1,13 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { ephemeralDefer } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('export-data')
     .setDescription('Export database data as JSON files')
-    .addStringOption(option => 
+    .addStringOption(option =>
       option.setName('type')
         .setDescription('Type of data to export')
         .setRequired(true)
@@ -17,7 +18,7 @@ module.exports = {
           { name: 'botState', value: 'botState' },
           { name: 'all', value: 'all' }
         )),
-  
+
   async execute(client, interaction) {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
@@ -28,15 +29,15 @@ module.exports = {
         });
       }
 
-      await interaction.deferReply({ ephemeral: true });
-      
+      await ephemeralDefer(interaction);
+
       const dataType = interaction.options.getString('type');
       const dataDir = path.join(__dirname, '..', '..', 'data');
-      
+
       if (dataType === 'all') {
         const files = ['applications.json', 'history.json', 'blacklist.json', 'botState.json'];
         const attachments = [];
-        
+
         for (const file of files) {
           const filePath = path.join(dataDir, file);
           if (fs.existsSync(filePath)) {
@@ -47,24 +48,24 @@ module.exports = {
             });
           }
         }
-        
+
         if (attachments.length === 0) {
           return await interaction.editReply('nuthin found to export.');
         }
-        
+
         return await interaction.editReply({
           content: `Exported ${attachments.length} database files.`,
           files: attachments
         });
       } else {
         const filePath = path.join(dataDir, `${dataType}.json`);
-        
+
         if (!fs.existsSync(filePath)) {
           return await interaction.editReply(`No ${dataType} database file found.`);
         }
-        
+
         const data = fs.readFileSync(filePath, 'utf8');
-        
+
         await interaction.editReply({
           content: `Exported ${dataType} database:`,
           files: [{

@@ -1,42 +1,47 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { ephemeralReply } = require('../utils/ephemeralHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('export-data')
-    .setDescription('Export database data as JSON files')
-    .addStringOption(option => 
+    .setName('import-data')
+    .setDescription('Import database data from a JSON file')
+    .addStringOption(option =>
       option.setName('type')
-        .setDescription('Type of data to export')
+        .setDescription('Type of data to import')
         .setRequired(true)
         .addChoices(
           { name: 'applications', value: 'applications' },
           { name: 'history', value: 'history' },
           { name: 'blacklist', value: 'blacklist' },
-          { name: 'botState', value: 'botState' },
-          { name: 'all', value: 'all' }
-        )),
-  
+          { name: 'botState', value: 'botState' }
+        ))
+    .addAttachmentOption(option =>
+      option.setName('file')
+        .setDescription('JSON file to import')
+        .setRequired(true))
+    .addBooleanOption(option =>
+      option.setName('overwrite')
+        .setDescription('Overwrite existing data (if false, will merge, not recommended)')
+        .setRequired(false)),
+
   async execute(client, interaction) {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
       if (!member.roles.cache.has(process.env.STAFF_ROLE_ID)) {
-        return await interaction.reply({
-          content: 'u cant run dis command silly :P',
-          ephemeral: true
-        });
+        return await ephemeralReply(interaction, 'u cant run dis command silly :P');
       }
 
-      await interaction.deferReply({ ephemeral: true });
-      
+      await ephemeralDefer(interaction);
+
       const dataType = interaction.options.getString('type');
       const dataDir = path.join(__dirname, '..', '..', 'data');
-      
+
       if (dataType === 'all') {
         const files = ['applications.json', 'history.json', 'blacklist.json', 'botState.json'];
         const attachments = [];
-        
+
         for (const file of files) {
           const filePath = path.join(dataDir, file);
           if (fs.existsSync(filePath)) {
@@ -47,24 +52,24 @@ module.exports = {
             });
           }
         }
-        
+
         if (attachments.length === 0) {
           return await interaction.editReply('No data files found to export.');
         }
-        
+
         return await interaction.editReply({
           content: `Exported ${attachments.length} database files.`,
           files: attachments
         });
       } else {
         const filePath = path.join(dataDir, `${dataType}.json`);
-        
+
         if (!fs.existsSync(filePath)) {
           return await interaction.editReply(`No ${dataType} database file found.`);
         }
-        
+
         const data = fs.readFileSync(filePath, 'utf8');
-        
+
         await interaction.editReply({
           content: `Exported ${dataType} database:`,
           files: [{
