@@ -14,7 +14,7 @@
 - **Database in JSON**: history blacklsits applications etc are stored in json files.
 - **Images**: verification images are saved, but pretty sure this doesnt work lol.
 - **Roles**: gives removes roles an idk.
-- **Configurable**: config file and ur bot info in a `.env` file.
+- **Configurable**: config file and ur bot info in a `.env` file nad admin commands for the database files.
 
 ---
 
@@ -107,7 +107,8 @@ Noodlify/
 - **/bulk-manage deny-all**: deny al pending applications
 - **/toggle-verification**: enable or disable the verification system
 - **/lookup**: look up user verification applications
-
+- **/admin-db**: for managing data like removing it
+- **/export or import data**: for exporting or importing bot data
 ---
 
 ## Credits
