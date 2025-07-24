@@ -1,13 +1,14 @@
 const { SlashCommandBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { ephemeralReply, ephemeralDefer } = require('../utils/ephemeralHelper');
+const { ephemeralReply, ephemeralDefer, ephemeralEdit } = require('../utils/ephemeralHelper');
+const { loadHistoryToMemory } = require('../modules/verificationManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('import-data')
     .setDescription('Import database data from a JSON file')
-    .addStringOption(option =>
+    .addStringOption(option => 
       option.setName('type')
         .setDescription('Type of data to import')
         .setRequired(true)
@@ -23,9 +24,9 @@ module.exports = {
         .setRequired(true))
     .addBooleanOption(option =>
       option.setName('overwrite')
-        .setDescription('Overwrite existing data (if false, will merge, not recommended)')
+        .setDescription('Overwrite existing data (defaults to true, set false to merge, not recommended)')
         .setRequired(false)),
-
+  
   async execute(client, interaction) {
     try {
       const member = await interaction.guild.members.fetch(interaction.user.id);
@@ -34,59 +35,54 @@ module.exports = {
       }
 
       await ephemeralDefer(interaction);
-
+      
       const dataType = interaction.options.getString('type');
-      const dataDir = path.join(__dirname, '..', '..', 'data');
-
-      if (dataType === 'all') {
-        const files = ['applications.json', 'history.json', 'blacklist.json', 'botState.json'];
-        const attachments = [];
-
-        for (const file of files) {
-          const filePath = path.join(dataDir, file);
-          if (fs.existsSync(filePath)) {
-            const data = fs.readFileSync(filePath, 'utf8');
-            attachments.push({
-              attachment: Buffer.from(data),
-              name: file
-            });
-          }
-        }
-
-        if (attachments.length === 0) {
-          return await interaction.editReply('No data files found to export.');
-        }
-
-        return await interaction.editReply({
-          content: `Exported ${attachments.length} database files.`,
-          files: attachments
-        });
-      } else {
-        const filePath = path.join(dataDir, `${dataType}.json`);
-
-        if (!fs.existsSync(filePath)) {
-          return await interaction.editReply(`No ${dataType} database file found.`);
-        }
-
-        const data = fs.readFileSync(filePath, 'utf8');
-
-        await interaction.editReply({
-          content: `Exported ${dataType} database:`,
-          files: [{
-            attachment: Buffer.from(data),
-            name: `${dataType}.json`
-          }]
-        });
+      const file = interaction.options.getAttachment('file');
+      const overwrite = interaction.options.getBoolean('overwrite') ?? true;
+      
+      if (!file.name.endsWith('.json')) {
+        return await ephemeralEdit(interaction, 'plz upload a .json file.');
       }
+      
+      const response = await fetch(file.url);
+      if (!response.ok) {
+        return await ephemeralEdit(interaction, 'Could not download the file.');
+      }
+      
+      let importedData;
+      try {
+        const text = await response.text();
+        importedData = JSON.parse(text);
+      } catch (error) {
+        return await ephemeralEdit(interaction, 'Invalid JSON file. Please check the format.');
+      }
+      
+      const dataDir = path.join(__dirname, '..', '..', 'data');
+      const filePath = path.join(dataDir, `${dataType}.json`);
+      
+      if (!overwrite && fs.existsSync(filePath)) {
+        try {
+          const existingData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          importedData = { ...existingData, ...importedData };
+        } catch (error) {
+          console.error('Error merging data:', error);
+          return await ephemeralEdit(interaction, 'Error merging with existing data. File may be corrupted.');
+        }
+      }
+      
+      fs.writeFileSync(filePath, JSON.stringify(importedData, null, 2), 'utf8');
+      
+      if (dataType === 'history') {
+        loadHistoryToMemory(client);
+      }
+      
+      await ephemeralEdit(interaction, `Successfully imported ${dataType} data (${overwrite ? 'overwritten' : 'merged'}).`);
     } catch (error) {
-      console.error('Error exporting data:', error);
+      console.error('Error importing data:', error);
       if (interaction.deferred) {
-        await interaction.editReply('wuh woh, sumthin went wrong exporting the data.');
+        await ephemeralEdit(interaction, 'wuh woh, sumthin went wrong importing the data.');
       } else {
-        await interaction.reply({
-          content: 'wuh woh, sumthin went wrong exporting the data.',
-          ephemeral: true
-        });
+        await ephemeralReply(interaction, 'wuh woh, sumthin went wrong importing the data.');
       }
     }
   }
